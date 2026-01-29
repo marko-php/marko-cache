@@ -82,7 +82,7 @@ function createCacheConfigRepository(
     };
 }
 
-it('returns driver from config', function () {
+it('reads driver from config without fallback', function () {
     $config = new CacheConfig(createCacheConfigRepository([
         'cache.driver' => 'redis',
     ]));
@@ -90,13 +90,7 @@ it('returns driver from config', function () {
     expect($config->driver())->toBe('redis');
 });
 
-it('returns default driver when not configured', function () {
-    $config = new CacheConfig(createCacheConfigRepository());
-
-    expect($config->driver())->toBe('file');
-});
-
-it('returns path from config', function () {
+it('reads path from config without fallback', function () {
     $config = new CacheConfig(createCacheConfigRepository([
         'cache.path' => '/var/cache',
     ]));
@@ -104,13 +98,7 @@ it('returns path from config', function () {
     expect($config->path())->toBe('/var/cache');
 });
 
-it('returns default path when not configured', function () {
-    $config = new CacheConfig(createCacheConfigRepository());
-
-    expect($config->path())->toBe('storage/cache');
-});
-
-it('returns default ttl from config', function () {
+it('reads default_ttl from config without fallback', function () {
     $config = new CacheConfig(createCacheConfigRepository([
         'cache.default_ttl' => 7200,
     ]));
@@ -118,8 +106,28 @@ it('returns default ttl from config', function () {
     expect($config->defaultTtl())->toBe(7200);
 });
 
-it('returns default ttl when not configured', function () {
-    $config = new CacheConfig(createCacheConfigRepository());
+it('throws ConfigNotFoundException when driver is missing', function () {
+    $config = new CacheConfig(createCacheConfigRepository([]));
 
-    expect($config->defaultTtl())->toBe(3600);
+    $config->driver();
+})->throws(ConfigNotFoundException::class);
+
+it('throws ConfigNotFoundException when path is missing', function () {
+    $config = new CacheConfig(createCacheConfigRepository([]));
+
+    $config->path();
+})->throws(ConfigNotFoundException::class);
+
+it('throws ConfigNotFoundException when default_ttl is missing', function () {
+    $config = new CacheConfig(createCacheConfigRepository([]));
+
+    $config->defaultTtl();
+})->throws(ConfigNotFoundException::class);
+
+it('config file contains all required keys with defaults', function () {
+    $configFile = require dirname(__DIR__, 2) . '/config/cache.php';
+
+    expect($configFile)->toHaveKey('driver');
+    expect($configFile)->toHaveKey('path');
+    expect($configFile)->toHaveKey('default_ttl');
 });
